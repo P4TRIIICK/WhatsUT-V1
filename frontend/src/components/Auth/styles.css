@@ -1,0 +1,17 @@
+.container-send-photo {
+    margin-top: 300px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .FormControl {
+    display: flex;
+    align-items: center;
+  }
+  
+  .FormLabel {
+    margin-right: 10px;
+  }
+
+  
+  

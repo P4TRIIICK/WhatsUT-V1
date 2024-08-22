@@ -1,0 +1,132 @@
+.messages {
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  scrollbar-width: none;
+}
+
+.select-chat-text {
+  color: #ffffff;
+  font-weight: bolder;
+  font-size: 1.5em;
+}
+
+.chatboxBox {
+  background-color: transparent;
+  border-radius: 14px;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.8);
+}
+
+.my-chats-text {
+  margin-top: 6px;
+  margin-right: 200px;
+  font-weight: bolder;
+  color: white;
+}
+.top-chats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatbox-container {
+  display: none;
+  align-items: center; 
+  flex-direction: column;
+  padding: 3px;
+  border-radius: 12px;
+  background-color: #2C2E54;
+  width: 100%;
+  height: 100%;
+}
+
+.grid-container {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+}
+
+@media (min-width: 48em) {
+  .chatbox-container {
+    display: flex;
+    width: 100%;
+  }
+}
+
+.mychats-container {
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background-color: #2C2E54;
+  width: 100%;
+  height: 100%;
+  font-family: 'Work Sans', sans-serif;
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.8);
+}
+
+.mychats-container h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.chat-list {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background-color: #2C2E54;
+  width: 100%;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.chat-item {
+  cursor: pointer;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.chat-item:hover {
+  background-color: #724DF3;
+}
+
+.chat-item.selected {
+  background-color: #724DF3;
+  color: white;
+}
+
+.chat-name {
+  color: #ffffff;
+}
+
+.latest-message {
+  font-size: 12px;
+  color: #ffffff;
+}
+
+.button-new-chat {
+  display: flex;
+  font-size: 17px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-add-gp {
+  background-color: #3c2980 !important;
+  font-weight: bold !important;
+  color: #ffffff !important;
+
+}
+
+.btn-add-gp:hover {
+  background-color: #724DF3 !important;
+}
+

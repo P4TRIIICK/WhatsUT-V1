@@ -1,0 +1,30 @@
+.chatpage-container {
+  width: 100%;
+}
+.sidedrawer-container {
+  height: 10vh;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  /* Ajuste a altura das linhas para ocupar 100% do viewport */
+  height: 90vh; /* Alterado para 100vh */
+  gap: 20px;
+  padding: 10px;
+}
+
+.myChatsBox {
+  border-radius: 12px;
+  background-color: transparent;
+  grid-column: 1 / 2;
+  /* Ajuste para ocupar 100% da altura disponível na grid */
+  height: 85vh;
+}
+
+.chatboxBox {
+  background-color: #f5f5f5;
+  grid-column: 2 / 3;
+  /* Ajuste para ocupar 100% da altura disponível na grid */
+  height: 100%;
+}

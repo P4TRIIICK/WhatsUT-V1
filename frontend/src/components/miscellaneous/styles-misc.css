@@ -1,0 +1,328 @@
+/* Estilos para .sidedrawer-container */
+.sidedrawer-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 70px;
+    background-color: #2C2E54;
+    padding-right: 20px;
+    padding-left: 20px;
+}
+
+/* Estilos para .button-add-friends-container */
+.button-add-friends-container {
+    align-items: center;
+    background-color: #3c2980;
+    padding: 10px;
+    justify-content: start;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+
+
+.btn-add-gp {
+  background-color: #3c2980;
+}
+
+.btn-add-gp:hover {
+  background-color: #724DF3;
+}
+
+.add-fr-text {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.button-add-friends-container:hover {
+  background-color: #724DF3;
+}
+
+.button-add-friends-container:hover {
+    background-color: #724DF3;
+}
+
+
+
+.close-search_users {
+  margin-left: 4px;
+}
+
+.search-button-add {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.close-search_users {
+  height: 45px;
+  width: 45px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estilos para .app-name */
+.app-name {
+    font-size: 5rem;
+    font-family: 'Work Sans', sans-serif;
+    text-align: center;
+    justify-content: center;
+    color: #ffffff;
+    text-decoration: solid;
+    font-weight: bolder;
+}
+
+/* Estilos para .user-info-container */
+.user-info-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2C2E54;
+    width: 120px;
+    height: 100%;
+    padding: 10px;
+}
+
+/* Estilos para .user-profile-menu */
+.user-profile-menu {
+    position: relative;
+    width: 100%;
+    color: #2C2E54;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  /* Estilos para .profile-button */
+  .profile-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #2C2E54;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .profile-button img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  /* Estilos para .profile-menu-list */
+  .profile-menu-list {
+    display: none;
+    position: absolute;
+    top: calc(100% - 20px);
+    right: 0;
+    background-color: #2C2E54;
+    border-radius: 12px;
+    padding: 10px;
+    z-index: 1000;
+    width: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+    transition: width 0.3s; 
+  }
+  
+  .chakra-button {
+    background-color: #3c2980 !important;
+    color: #ffffff !important;
+    margin-left: 12px;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .chakra-button:hover {
+    background-color: #724DF3 !important;
+  }
+
+  .profile-menu-list.open {
+    display: block;
+    width: 130px;
+  }
+  
+  .profile-menu-list li {
+    list-style-type: none;
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    margin-bottom: -10px;
+    color: #ffffff;
+    transition: background-color 0.3s;
+  }
+  
+  .profile-menu-list li:hover {
+    background-color: #724DF3;
+    cursor: pointer;
+  }
+
+  /* Estilos para .avatar */
+  .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+/* Estilos para .avatar */
+.avatar, .user-profile-menu .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+/* Estilos para .drawer */
+.drawer {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100%;
+    background-color: rgba(5, 5, 5, 0.5);
+    transition: left 0.3s ease;
+    z-index: 999;
+}
+
+.drawer.open {
+    left: 0;
+}
+
+.drawer-overlay, .drawer-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.drawer-content {
+    background-color: #2C2E54;
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.7);
+}
+
+.search-button-friend-drawer {
+  background-color: #3c2980 !important;
+}
+
+.close-search_users {
+  background-color: #3c2980 !important;
+}
+
+.search-button-friend-drawer:hover {
+  background-color: #724DF3 !important;
+}
+
+.close-search_users:hover {
+  background-color: #724DF3 !important;
+}
+
+/* Estilos para .drawer-header */
+.drawer-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffffff;
+}
+
+/* Estilos para .drawer-body */
+.drawer-body {
+    overflow-y: auto;
+    max-height: calc(100% - 60px);
+}
+
+/* Estilos para .search-input */
+.search-input {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.close-search_users {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    outline: none;
+}
+
+.search-input input {
+    flex: 1;
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+}
+
+.search-input button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    outline: none;
+}
+
+/* Estilos para .search-result-list */
+.search-result-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.search-result-list li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Estilos para .spinner-container */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.profile-modal-content {
+    background-color: #ffffff;
+    padding: 20px;
+  }
+  
+  .profile-modal-close-button {
+    background-color: #d3cece;
+    /* Centraliza verticalmente o botão */
+    margin: auto;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    padding: 10px;
+  }
+  
+  .profile-modal-close-button:hover {
+    background-color: #837e7e;
+  }
+  
+  .profile-modal-container {
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  
+  .profile-modal-button {
+    border: none;
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 32px;
+    margin: 4px 2px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
