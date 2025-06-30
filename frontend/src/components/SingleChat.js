@@ -1,238 +1,115 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { FormControl } from '@chakra-ui/form-control';
-import { Input } from '@chakra-ui/input';
-import { Button } from '@chakra-ui/react';
+import { Input, InputGroup, InputRightElement } from '@chakra-ui/input';
 import { Box, Text } from '@chakra-ui/layout';
 import { IconButton, Spinner, useToast } from '@chakra-ui/react';
-import { ArrowBackIcon, AttachmentIcon } from '@chakra-ui/icons';
-import { FaPlay } from "react-icons/fa6";
-import ProfileModal from './miscellaneous/ProfileModal';
-import ScrollableChat from './ScrollableChat';
+import { ArrowBackIcon } from '@chakra-ui/icons';
+import { IoSend } from "react-icons/io5";
 import Lottie from 'react-lottie';
 import animationData from '../animations/typing.json';
-import UpdateGroupChatModal from './miscellaneous/UpdateGroupChatModal';
 import { ChatState } from '../Context/ChatProvider';
-import { getSender, getSenderFull } from '../config/ChatLogics';
+import ScrollableChat from './ScrollableChat';
+import { getSender } from '../config/ChatLogics'; // <-- LINHA ADICIONADA DE VOLTA
 
-var socket, selectedChatCompare;
+let socket;
+let selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  const [file, setFile] = useState(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
   const toast = useToast();
-  const { selectedChat, setSelectedChat, user, setChats, chats } = ChatState();
+  const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
   const messagesEndRef = useRef(null);
+  
+  const fetchMessages = useCallback(async () => {
+    if (!selectedChat) return;
 
-  const defaultOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: animationData,
-    rendererSettings: {
-      preserveAspectRatio: 'xMidYMid slice',
-    },
-  };
+    try {
+      setLoading(true);
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
+      setMessages(data);
+      setLoading(false);
+      socket.emit("join chat", selectedChat._id);
+    } catch (error) {
+      toast({
+        title: "Ocorreu um erro!",
+        description: "Falha ao carregar as mensagens",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setLoading(false);
+    }
+  }, [selectedChat, user.token, toast]);
 
   useEffect(() => {
     socket = io();
-    socket.emit('setup', user);
-    socket.on('connected', () => setSocketConnected(true));
-    socket.on('typing', () => setIsTyping(true));
-    socket.on('stop typing', () => setIsTyping(false));
+    socket.emit("setup", user);
+    socket.on("connected", () => setSocketConnected(true));
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
 
-    return () => {
-      socket.disconnect();
-    };
+    return () => socket.disconnect();
   }, [user]);
 
   useEffect(() => {
     fetchMessages();
     selectedChatCompare = selectedChat;
-  }, [selectedChat]);
+  }, [selectedChat, fetchAgain, fetchMessages]);
 
   useEffect(() => {
-    socket.on('message received', (newMessageReceived) => {
+    const handleNewMessage = (newMessageReceived) => {
       if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
-        // Not in the selected chat, so no need to update the messages array
-        return;
+        // Lógica de notificação pode ser adicionada aqui
+      } else {
+        setMessages((prevMessages) => [...prevMessages, newMessageReceived]);
       }
-
-      let formattedMessage = { ...newMessageReceived };
-
-      if (formattedMessage.filePath) {
-        formattedMessage.content = (
-          <div>
-            File: <a href={formattedMessage.filePath} download>{formattedMessage.fileName}</a>
-          </div>
-        );
-      }
-
-      setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-
-      // Update the latest message in chats and move the chat to the top of the list
-      setChats((prevChats) => {
-        const updatedChats = prevChats.map((chat) =>
-          chat._id === newMessageReceived.chat._id ? { ...chat, latestMessage: newMessageReceived } : chat
-        );
-
-        // Move the updated chat to the top of the list
-        const chatIndex = updatedChats.findIndex(chat => chat._id === newMessageReceived.chat._id);
-        const [movedChat] = updatedChats.splice(chatIndex, 1);
-        return [movedChat, ...updatedChats];
+      
+      const updatedChats = chats.map(chat => 
+        chat._id === newMessageReceived.chat._id 
+          ? { ...chat, latestMessage: newMessageReceived } 
+          : chat
+      );
+      updatedChats.sort((a, b) => {
+        if (!a.latestMessage) return 1;
+        if (!b.latestMessage) return -1;
+        return new Date(b.latestMessage.createdAt) - new Date(a.latestMessage.createdAt);
       });
-    });
-  }, [setChats]);
+      setChats(updatedChats);
+    };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const fetchMessages = async () => {
-    if (!selectedChat) return;
-
-    try {
-      setLoading(true);
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
-      setMessages(data);
-      setLoading(false);
-      socket.emit('join chat', selectedChat._id);
-    } catch (error) {
-      setLoading(false);
-      toast({
-        title: 'Error Occurred!',
-        description: 'Failed to Load the Messages',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-        position: 'bottom',
-      });
-      console.error('Failed to fetch messages:', error);
-    }
+    socket.on("message received", handleNewMessage);
+    return () => socket.off("message received", handleNewMessage);
+  }, [chats, setChats]);
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fileChangeHandler = (event) => {
-    setFile(event.target.files[0]);
-    sendFileMessage(event.target.files[0]);
-  };
-
-  const sendFileMessage = async (file) => {
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('chatId', selectedChat._id);
-
-        const fileConfig = {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        };
-
-        const response = await axios.post('/api/message/file', formData, fileConfig);
-        const data = response.data;
-        setFile(null);
-
-        socket.emit('new message', data);
-        setMessages((prevMessages) => [...prevMessages, data]);
-
-        // Update the latest message in chats and move the chat to the top of the list
-        setChats((prevChats) => {
-          const updatedChats = prevChats.map((chat) =>
-            chat._id === data.chat._id ? { ...chat, latestMessage: data } : chat
-          );
-
-          // Move the updated chat to the top of the list
-          const chatIndex = updatedChats.findIndex(chat => chat._id === data.chat._id);
-          const [movedChat] = updatedChats.splice(chatIndex, 1);
-          return [movedChat, ...updatedChats];
-        });
-      } catch (error) {
-        console.error('Error sending file message:', error.response?.data || error.message);
-        toast({
-          title: 'Error Occurred!',
-          description: 'Failed to send the file',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-          position: 'bottom',
-        });
-      }
-    }
-  };
-
+  useEffect(scrollToBottom, [messages]);
+  
   const sendMessage = async (event) => {
-    if (newMessage || file) {
-      socket.emit('stop typing', selectedChat._id);
+    if ((event.key === "Enter" || event.type === "click") && newMessage) {
+      socket.emit("stop typing", selectedChat._id);
       try {
-        const config = {
-          headers: {
-            'Content-type': 'application/json',
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
-
-        let data;
-
-        if (file) {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('chatId', selectedChat._id);
-
-          const fileConfig = {
-            headers: {
-              Authorization: `Bearer ${user.token}`,
-              'Content-Type': 'multipart/form-data',
-            },
-          };
-
-          const response = await axios.post('/api/message/file', formData, fileConfig);
-          data = response.data;
-          setFile(null);
-        } else {
-          const messagePayload = {
-            content: newMessage,
-            chatId: selectedChat._id,
-          };
-          setNewMessage('');
-          const response = await axios.post('/api/message', messagePayload, config);
-          data = response.data;
-        }
-
-        socket.emit('new message', data);
-        setMessages((prevMessages) => [...prevMessages, data]);
-
-        // Update the latest message in chats and move the chat to the top of the list
-        setChats((prevChats) => {
-          const updatedChats = prevChats.map((chat) =>
-            chat._id === data.chat._id ? { ...chat, latestMessage: data } : chat
-          );
-
-          // Move the updated chat to the top of the list
-          const chatIndex = updatedChats.findIndex(chat => chat._id === data.chat._id);
-          const [movedChat] = updatedChats.splice(chatIndex, 1);
-          return [movedChat, ...updatedChats];
-        });
+        const config = { headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` } };
+        const contentToSend = newMessage;
+        setNewMessage("");
+        const { data } = await axios.post("/api/message", { content: contentToSend, chatId: selectedChat._id }, config);
+        socket.emit("new message", data);
+        setMessages([...messages, data]);
       } catch (error) {
-        console.error('Error sending message:', error.response?.data || error.message);
         toast({
-          title: 'Error Occurred!',
-          description: 'Failed to send the message',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-          position: 'bottom',
+          title: "Erro ao enviar a mensagem", status: "error", duration: 5000,
+          isClosable: true, position: "bottom",
         });
       }
     }
@@ -240,179 +117,67 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
-
-    if (!socketConnected) return;
-
-    if (!typing) {
-      setTyping(true);
-      socket.emit('typing', selectedChat._id);
-    }
-
-    let lastTypingTime = new Date().getTime();
-    var timerLength = 3000;
-
+    if (!socketConnected || typing) return;
+    setTyping(true);
+    socket.emit("typing", selectedChat._id);
+    
     setTimeout(() => {
-      var timeNow = new Date().getTime();
-      var timeDiff = timeNow - lastTypingTime;
-      if (timeDiff >= timerLength && typing) {
-        socket.emit('stop typing', selectedChat._id);
-        setTyping(false);
-      }
-    }, timerLength);
-  };
-
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+      socket.emit("stop typing", selectedChat._id);
+      setTyping(false);
+    }, 3000);
   };
 
   return (
     <>
       {selectedChat ? (
         <>
-          <Box
-            d="flex"
-            flexDir="column"
-            justifyContent="center"
-            p={3}
-            bg="#E8E8E8"
-            w="100%"
-            h="100%"
-            borderRadius="lg"
-            overflowY="hidden"
-            backgroundColor="#2C2E54"
+          <Text
+            fontSize={{ base: "28px", md: "30px" }} pb={3} px={2} w="100%"
+            fontFamily="Montserrat" display="flex" justifyContent="space-between"
+            alignItems="center" color="white"
           >
-            <Text
-              fontSize={{ base: '20px', md: '30px' }}
-              pb={3}
-              px={2}
-              w="100%"
-              fontFamily="Work Sans"
-              d="flex"
-              justifyContent={{ base: 'space-between' }}
-              alignItems="center"
-              color="#ffffff"
-              fontWeight="400"
-              
-            >
-              <IconButton
-                d={{ base: 'flex', md: 'none' }}
-                icon={<ArrowBackIcon />}
-                onClick={() => setSelectedChat('')}
-                marginRight="12px"
-                backgroundColor="#3c2980"
-                color="#ffffff"
-                _hover={{ backgroundColor: '#724DF3' }} 
-              />
-              {messages &&
-                (!selectedChat.isGroupChat ? (
-                  <>
-                    {getSender(user, selectedChat.users)}
-                    <ProfileModal user={getSenderFull(user, selectedChat.users)} />
-                  </>
-                ) : (
-                  <>
-                    {selectedChat.chatName.toUpperCase()}
-                    <UpdateGroupChatModal
-                      fetchMessages={fetchMessages}
-                      fetchAgain={fetchAgain}
-                      setFetchAgain={setFetchAgain}
-                    />
-                  </>
-                ))}
-            </Text>
-
-            <Box
-              d="flex"
-              flexDir="column"
-              justifyContent="flex-end"
-              p={3}
-              bg="#E8E8E8"
-              w="100%"
-              h="85%"
-              borderRadius="lg"
-              overflowY="auto"
-              
-            >
-              {loading ? (
-                <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" />
-              ) : (
-                <div className="messages" style={{ overflowY: 'scroll' }}>
-                  <ScrollableChat messages={messages} />
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-
-              {istyping ? (
-                <div>
-                  <Lottie options={defaultOptions} width={70} />
-                </div>
-              ) : (
-                <></>
-              )}
-            </Box>
-
-            <FormControl
-              id="message-form"
-              isRequired
-              mt={3}
-              position="sticky"
-              bottom={0}
-              bg="#E8E8E8"
-              zIndex={1}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              backgroundColor="#2C2E54"
-            >
-          
-              <Button
-                as="label"
-                htmlFor="file-upload"
-                leftIcon={<AttachmentIcon />}
-                variant="solid"
-                colorScheme="blue"
-                paddingLeft={"24px"}
-              >
+            <IconButton
+              d={{ base: "flex", md: "none" }} icon={<ArrowBackIcon />}
+              onClick={() => setSelectedChat("")} variant="ghost" colorScheme="teal"
+            />
+            {selectedChat.isGroupChat ? (
+              selectedChat.chatName.toUpperCase()
+            ) : (
+              getSender(user, selectedChat.users)
+            )}
+          </Text>
+          <Box
+            display="flex" flexDir="column" justifyContent="flex-end" p={3}
+            bg="#1A202C" w="100%" h="100%" borderRadius="lg" overflowY="hidden"
+          >
+            {loading ? (
+              <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" color="teal.500"/>
+            ) : (
+              <Box flex="1" overflowY="auto" className="messages">
+                <ScrollableChat messages={messages} />
+                <div ref={messagesEndRef} />
+              </Box>
+            )}
+            <FormControl onKeyDown={sendMessage} isRequired mt={3}>
+              {istyping ? (<div> <Lottie options={{ loop: true, autoplay: true, animationData }} height={40} width={70} style={{ marginBottom: 15, marginLeft: 0 }} /> </div>) : (<></>)}
+              <InputGroup>
                 <Input
-                  type="file"
-                  id="file-upload"
-                  onChange={fileChangeHandler}
-                  hidden
+                  variant="filled" bg="gray.700" color="white"
+                  _hover={{ bg: "gray.600" }} _placeholder={{ color: "gray.400" }}
+                  focusBorderColor="teal.500" placeholder="Digite uma mensagem.."
+                  onChange={typingHandler} value={newMessage}
                 />
-              </Button>
-              <Input
-                variant="filled"
-                bg="#E2E8F0"
-                placeholder="Digite algo.."
-                value={newMessage}
-                onChange={typingHandler}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage(e)}
-                width={'80%'}
-                marginLeft={'2%'}
-                marginRight={'2%'}
-                color="#ffffff"
-              />
-              <Button
-                onClick={sendMessage}
-                colorScheme="blue"
-                variant="solid"
-                size="md"
-                width="10%"
-                marginLeft={'1%'}
-                leftIcon={<FaPlay />}
-                paddingRight={"24px"}
-              >
-                Enviar
-              </Button>
+                <InputRightElement>
+                   <IconButton aria-label="Enviar" icon={<IoSend />} colorScheme="teal" onClick={sendMessage} />
+                </InputRightElement>
+              </InputGroup>
             </FormControl>
           </Box>
         </>
       ) : (
         <Box d="flex" alignItems="center" justifyContent="center" h="100%">
-          <Text fontSize="3xl" pb={3} fontFamily="Work Sans" textAlign="center">
-            Clique em uma mensagem para começar a conversar!
+          <Text fontSize="3xl" pb={3} fontFamily="Montserrat" color="gray.400">
+            Clique em um contato para iniciar a conversa!
           </Text>
         </Box>
       )}
