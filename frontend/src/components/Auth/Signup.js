@@ -7,7 +7,8 @@ import axios from "axios";
 import { useState } from "react";
 import { useHistory } from "react-router";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
-import { motion } from "framer-motion"; // Importando a biblioteca de animação
+import { motion } from "framer-motion";
+import { ChatState } from "../../Context/ChatProvider"; // Importe o ChatState
 
 const MotionVStack = motion(VStack);
 
@@ -22,11 +23,113 @@ const Signup = () => {
   
   const toast = useToast();
   const history = useHistory();
+  const { setUser } = ChatState(); // Pegue o setUser do context
 
-  // --- Nenhuma alteração necessária nas funções de lógica ---
-  const submitHandler = async () => { /* ... sua lógica ... */ };
-  const postDetails = (pics) => { /* ... sua lógica ... */ };
-  // --- Fim da lógica ---
+  // LÓGICA DO UPLOAD DE IMAGEM RESTAURADA
+  const postDetails = (pics) => {
+    setPicLoading(true);
+    if (pics === undefined) {
+      toast({
+        title: "Por favor, selecione uma imagem.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+    if (pics.type === "image/jpeg" || pics.type === "image/png") {
+      const data = new FormData();
+      data.append("file", pics);
+      data.append("upload_preset", "WhatsUT"); // Seu preset do Cloudinary
+      data.append("cloud_name", "dz6vzitly");    // Seu cloud name do Cloudinary
+      fetch("https://api.cloudinary.com/v1_1/dz6vzitly/image/upload", {
+        method: "post",
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setPic(data.url.toString());
+          setPicLoading(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setPicLoading(false);
+        });
+    } else {
+      toast({
+        title: "Formato de imagem inválido.",
+        description: "Por favor, selecione uma imagem JPG ou PNG.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+    }
+  };
+
+  // LÓGICA DE CADASTRO RESTAURADA
+  const submitHandler = async () => {
+    setPicLoading(true);
+    if (!name || !email || !password || !confirmpassword) {
+      toast({
+        title: "Por favor, preencha todos os campos obrigatórios.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+    if (password !== confirmpassword) {
+      toast({
+        title: "As senhas não coincidem.",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+    try {
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+        },
+      };
+      const { data } = await axios.post(
+        "/api/user",
+        { name, email, password, pic },
+        config
+      );
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      // Salva o usuário no context e no localStorage
+      setUser(data); 
+      localStorage.setItem("userInfo", JSON.stringify(data));
+      setPicLoading(false);
+      history.push("/chats");
+    } catch (error) {
+      toast({
+        title: "Ocorreu um erro no cadastro!",
+        description: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+    }
+  };
 
   return (
     <MotionVStack
@@ -35,7 +138,6 @@ const Signup = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      {/* Nome */}
       <FormControl id="name-signup-innovative" isRequired>
         <FormLabel color="whiteAlpha.900">Nome</FormLabel>
         <Input
@@ -45,8 +147,6 @@ const Signup = () => {
           onChange={(e) => setName(e.target.value)}
         />
       </FormControl>
-
-      {/* Email */}
       <FormControl id="email-signup-innovative" isRequired>
         <FormLabel color="whiteAlpha.900">Email</FormLabel>
         <Input
@@ -57,8 +157,6 @@ const Signup = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
       </FormControl>
-      
-      {/* Senha */}
       <FormControl id="password-signup-innovative" isRequired>
         <FormLabel color="whiteAlpha.900">Crie sua Senha</FormLabel>
         <InputGroup>
@@ -74,8 +172,6 @@ const Signup = () => {
             </InputRightElement>
         </InputGroup>
       </FormControl>
-      
-      {/* Confirmar Senha */}
       <FormControl id="confirm-password-signup-innovative" isRequired>
         <FormLabel color="whiteAlpha.900">Confirme sua Senha</FormLabel>
         <Input
@@ -86,8 +182,6 @@ const Signup = () => {
           onChange={(e) => setConfirmpassword(e.target.value)}
         />
       </FormControl>
-
-      {/* Upload de Foto */}
       <FormControl id="pic-innovative">
         <FormLabel color="whiteAlpha.900">Foto do Perfil</FormLabel>
         <Input
@@ -116,7 +210,6 @@ const Signup = () => {
             }}
         />
       </FormControl>
-
       <Button
         width="100%"
         mt={4}
