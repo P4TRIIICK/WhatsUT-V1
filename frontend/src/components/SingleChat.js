@@ -11,7 +11,9 @@ import Lottie from 'react-lottie';
 import animationData from '../animations/typing.json';
 import { ChatState } from '../Context/ChatProvider';
 import ScrollableChat from './ScrollableChat';
-import { getSender } from '../config/ChatLogics'; // <-- LINHA ADICIONADA DE VOLTA
+import { getSender } from '../config/ChatLogics';
+// ADIÇÃO 1: Importando o modal de informações do grupo de volta
+import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 
 let socket;
 let selectedChatCompare;
@@ -68,7 +70,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   useEffect(() => {
     const handleNewMessage = (newMessageReceived) => {
       if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
-        // Lógica de notificação pode ser adicionada aqui
+        // Lógica de notificação
       } else {
         setMessages((prevMessages) => [...prevMessages, newMessageReceived]);
       }
@@ -141,9 +143,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               onClick={() => setSelectedChat("")} variant="ghost" colorScheme="teal"
             />
             {selectedChat.isGroupChat ? (
-              selectedChat.chatName.toUpperCase()
+              <>
+                {selectedChat.chatName.toUpperCase()}
+                {/* ADIÇÃO 2: Renderizando o componente do modal aqui */}
+                <UpdateGroupChatModal
+                  fetchAgain={fetchAgain}
+                  setFetchAgain={setFetchAgain}
+                  fetchMessages={fetchMessages}
+                />
+              </>
             ) : (
-              getSender(user, selectedChat.users)
+              <>
+                {getSender(user, selectedChat.users)}
+                {/* Se quiser adicionar o ProfileModal para chats individuais, seria aqui */}
+              </>
             )}
           </Text>
           <Box

@@ -143,26 +143,54 @@ const renameGroup = asyncHandler(async (req, res) => {
 const removeFromGroup = asyncHandler(async (req, res) => {
   const { chatId, userId } = req.body;
 
-  // check if the requester is admin
+  // Busca o chat para verificar as informações antes de atualizar
+  const chat = await Chat.findById(chatId);
 
-  const removed = await Chat.findByIdAndUpdate(
-    chatId,
-    {
-      $pull: { users: userId },
-    },
-    {
-      new: true,
+  if (!chat) {
+    res.status(404);
+    throw new Error("Chat Not Found");
+  }
+
+  const userToRemove = userId;
+  const requester = req.user._id.toString();
+  const admin = chat.groupAdmin._id.toString();
+
+  // Garante que apenas o admin possa remover outros (mas qualquer um pode sair)
+  if (requester !== admin && requester !== userToRemove) {
+    res.status(403);
+    throw new Error("Only the group admin can remove other users.");
+  }
+  
+  // LÓGICA DE TROCA DE ADMIN
+  // Verifica se o usuário a ser removido é o administrador
+  if (admin === userToRemove) {
+    // Encontra o primeiro usuário na lista que NÃO é o admin que está saindo
+    const newAdmin = chat.users.find(
+      (u) => u._id.toString() !== admin
+    );
+
+    if (newAdmin) {
+      // Se encontrou um novo usuário, promove-o a admin
+      chat.groupAdmin = newAdmin._id;
+    } else {
+      // Se não houver mais ninguém, o grupo poderia ser deletado,
+      // mas por enquanto vamos apenas remover o usuário.
+      // A remoção abaixo esvaziará o grupo.
     }
-  )
+  }
+
+  // Remove o usuário da lista
+  chat.users.pull(userToRemove);
+
+  // Salva as alterações (novo admin e lista de usuários atualizada)
+  await chat.save();
+
+  // Busca o chat atualizado para popular os campos e retornar ao frontend
+  const updatedChat = await Chat.findById(chatId)
     .populate("users", "-password")
     .populate("groupAdmin", "-password");
 
-  if (!removed) {
-    res.status(404);
-    throw new Error("Chat Not Found");
-  } else {
-    res.json(removed);
-  }
+  res.json(updatedChat);
 });
 
 // @desc    Add user to Group / Leave
